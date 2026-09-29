@@ -1,0 +1,23 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+aiosqlite
+pydantic[email]
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pytest
+
+# Signal analysis. neurokit2 handles the contact (fingertip) PPG; the face path
+# uses rPPG-Toolbox, which is vendored as a git clone rather than published to
+# PyPI -- see vendor_rppg/README-vendored.md. opencv and scikit-image are only
+# there because the toolbox imports them at module load.
+numpy
+scipy
+neurokit2
+opencv-python-headless
+scikit-image
+
+# For the GPU path. Install from the CUDA index, not plain PyPI:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu126
+torch

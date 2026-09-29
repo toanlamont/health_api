@@ -1,0 +1,49 @@
+# --- Personal data ---
+# health.db holds real accounts: email addresses and password hashes. captures/
+# holds colour means taken off someone's face along with the timestamps of when
+# they were sitting in front of the camera. Neither belongs in a repository,
+# and once pushed they stay in the history even after a later delete.
+*.db
+*.sqlite
+*.sqlite3
+captures/
+
+# --- Secrets ---
+# SECRET_KEY signs the auth tokens; anyone holding it can mint a valid login.
+.env
+.env.*
+!.env.example
+
+# --- Virtual environment ---
+# 4.8 GB, most of it CUDA libraries from torch. Rebuild it from
+# requirements.txt instead, and install torch from the CUDA index as the note
+# in that file says.
+venv/
+.venv/
+env/
+
+# --- Vendored rPPG-Toolbox ---
+# A git clone of https://github.com/ubicomplab/rPPG-Toolbox, about 660 MB:
+# 311 MB of its own history and 298 MB of pretrained model weights that this
+# project never loads. Only three small modules are imported from it, so the
+# directory is rebuilt by cloning rather than committed. Its own .git would
+# otherwise turn it into a nested repository that pushes as an empty stub.
+# The whole directory goes: because it carries its own .git, an exception for
+# a file inside it would not work -- git does not descend into a nested
+# repository, so it records a pointer rather than the contents. How to restore
+# it is in VENDOR.md at the root instead.
+vendor_rppg/
+
+# --- Python build artefacts ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+
+# --- Runtime output ---
+server.log
+*.log
