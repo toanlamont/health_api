@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: health
+      POSTGRES_PASSWORD: health
+      POSTGRES_DB: health
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U health -d health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    image: health-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Overrides .env: inside the compose network the database host is "db".
+      DATABASE_URL: postgresql+asyncpg://health:health@db:5432/health
+      WATCHFILES_FORCE_POLLING: "true"
+    # Code is mounted in and reloaded on change. Windows bind mounts don't send
+    # file events into the container, so watchfiles has to poll.
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload --reload-dir app --reload-dir tools
+    volumes:
+      - .:/app
+    ports:
+      - "1234:8080"
+    depends_on:
+      db:
+        condition: service_healthy

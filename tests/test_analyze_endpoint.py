@@ -133,3 +133,23 @@ def test_payload_size_is_practical_for_a_face_capture():
 
     megabytes = len(json.dumps(body).encode()) / 1e6
     assert megabytes < 2.0, f"payload is {megabytes:.1f} MB"
+
+
+def test_a_stored_reading_carries_local_time(client, auth):
+    # Columns hold naive local time and are handed to the assistant as is. A
+    # database default would stamp UTC instead -- seven hours off in Vietnam,
+    # so the assistant reported a midnight measurement as the evening before.
+    from datetime import datetime
+
+    times, regions = synth(bpm=75)
+    client.post(
+        "/api/v1/heart-rate/analyze",
+        json=payload(times, regions, save=True),
+        headers=auth,
+    )
+    newest = max(
+        client.get("/api/v1/heart-rate", headers=auth).json(),
+        key=lambda r: r["measured_at"],
+    )
+    stamped = datetime.fromisoformat(newest["measured_at"])
+    assert abs((datetime.now() - stamped).total_seconds()) < 60

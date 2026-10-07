@@ -2,6 +2,14 @@ FROM python:3.14-slim
 
 WORKDIR /app
 
+# Times are stored as naive local time and handed to the assistant as such, so
+# the container has to run on the users' clock. Slim images ship without the
+# zone database, and without it TZ silently falls back to UTC.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+ENV TZ=Asia/Ho_Chi_Minh
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

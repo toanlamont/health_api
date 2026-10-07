@@ -4,3 +4,7 @@ __pycache__/
 *.db
 .git/
 .gitignore
+.venv/
+.env
+pgdata/
+captures/

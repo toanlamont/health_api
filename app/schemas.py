@@ -2,7 +2,7 @@ from datetime import datetime, date
 from math import isfinite
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -164,6 +164,12 @@ class MealCreate(BaseModel):
     carbs_g: float | None = None
     fat_g: float | None = None
     eaten_at: datetime | None = None
+
+    @field_validator("eaten_at")
+    @classmethod
+    def _naive_local(cls, v: datetime | None) -> datetime | None:
+        # Columns are timezone-naive local time; Postgres rejects aware values.
+        return v.astimezone().replace(tzinfo=None) if v and v.tzinfo else v
 
 class MealOut(BaseModel):
     id: str

@@ -3,7 +3,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta, timezone, date as date_type
+from datetime import datetime, timedelta, date as date_type
 import logging
 import numpy as np
 from app import captures, nutrition, ppg
@@ -331,7 +331,7 @@ async def dashboard(user: User = Depends(get_current_user), db: AsyncSession = D
     )
     latest_hr = latest.scalar_one_or_none()
 
-    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    week_ago = datetime.now() - timedelta(days=7)
     avg_result = await db.execute(
         select(func.avg(HeartRateRecord.bpm)).where(
             HeartRateRecord.user_id == user.id, HeartRateRecord.measured_at >= week_ago

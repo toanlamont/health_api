@@ -3,6 +3,7 @@ uvicorn[standard]
 sqlalchemy[asyncio]
 aiosqlite
 psycopg[binary]
+asyncpg
 pydantic[email]
 python-jose[cryptography]
 passlib[bcrypt]

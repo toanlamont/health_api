@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from sqlalchemy import String, Integer, Float, Boolean, DateTime, Date, Text, Enum as SAEnum, func
+from sqlalchemy import String, Integer, Float, Boolean, DateTime, Date, Text, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -18,7 +18,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     # New accounts start unverified; init_db marks pre-existing ones verified.
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 class HealthProfile(Base):
     __tablename__ = "health_profiles"
@@ -28,7 +28,7 @@ class HealthProfile(Base):
     weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
     bmi: Mapped[float | None] = mapped_column(Float, nullable=True)
     blood_type: Mapped[str | None] = mapped_column(String(5), nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 class HeartRateRecord(Base):
     __tablename__ = "heart_rate_records"
@@ -38,7 +38,7 @@ class HeartRateRecord(Base):
     confidence: Mapped[float] = mapped_column(Float, default=0.0)
     measurement_duration: Mapped[int] = mapped_column(Integer, default=15)
     context: Mapped[str] = mapped_column(String(20), default="resting")
-    measured_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    measured_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 class WeightRecord(Base):
     __tablename__ = "weight_records"
@@ -46,7 +46,7 @@ class WeightRecord(Base):
     user_id: Mapped[str] = mapped_column(String(36), index=True)
     weight_kg: Mapped[float] = mapped_column(Float)
     bmi: Mapped[float | None] = mapped_column(Float, nullable=True)
-    recorded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 class Reminder(Base):
     __tablename__ = "reminders"
@@ -79,16 +79,16 @@ class MealRecord(Base):
     protein_g: Mapped[float | None] = mapped_column(Float, nullable=True)
     carbs_g: Mapped[float | None] = mapped_column(Float, nullable=True)
     fat_g: Mapped[float | None] = mapped_column(Float, nullable=True)
-    eaten_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+    eaten_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, index=True)
 
 class ChatConversation(Base):
     __tablename__ = "chat_conversations"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
     user_id: Mapped[str] = mapped_column(String(36), index=True)
     title: Mapped[str] = mapped_column(String(100))
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     # Set by hand on every new message, so the list can be sorted by activity.
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, index=True)
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
@@ -97,7 +97,7 @@ class ChatMessage(Base):
     # user or assistant. Tool calls are not stored: they are re-run on demand.
     role: Mapped[str] = mapped_column(String(20))
     content: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, index=True)
 
 class EmailVerification(Base):
     """The pending sign-up code for one user; only its hash is stored."""

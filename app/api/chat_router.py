@@ -204,7 +204,7 @@ async def chat_stream(
     conv.updated_at = now
     await db.commit()
 
-    today = datetime.now().strftime("%Y-%m-%d (%A)")
+    today = datetime.now().strftime("%Y-%m-%d (%A), %H:%M")
     messages: list = [
         {"role": "system", "content": f"{SYSTEM_PROMPT}\n\nHôm nay là {today}."},
         *({"role": m.role, "content": m.content} for m in history),
