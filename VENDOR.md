@@ -1,16 +1,11 @@
 # rPPG-Toolbox, vendored
 
-`vendor_rppg/` is not in this repository and has to be cloned before the
-backend will start:
+`vendor_rppg/` is committed to this repository, so a plain `git clone` is enough.
+Only the files the app imports are kept (listed below, plus the upstream
+LICENSE), about 50 KB, instead of the full 660 MB upstream repository, which is
+mostly pretrained weights this project never loads.
 
-```
-git clone --depth 1 https://github.com/ubicomplab/rPPG-Toolbox.git vendor_rppg
-```
-
-That pulls about 660 MB, nearly all of it pretrained model weights this project
-never loads -- only the three modules listed below are imported. It is left out
-of version control rather than committed because its own `.git` would make it a
-nested repository, which pushes as an empty pointer instead of the files.
+Upstream commit: b7500b848f84ad7f86e277b4612563b69f4f88f9.
 
 Cloned from https://github.com/ubicomplab/rPPG-Toolbox (Liu et al., rPPG-Toolbox,
 NeurIPS 2023 Datasets and Benchmarks). It is a repository, not a PyPI package,
@@ -35,5 +30,10 @@ Nothing here is modified. Two accommodations live in `app/ppg.py` instead:
 RAPIDS package that was discontinued and only ever shipped on conda, leaving a
 placeholder 0.0.1 on PyPI.
 
-To update: delete this directory and re-clone, then run
+One change to upstream: `unsupervised_methods/__init__.py` is emptied, because
+the original star-imports methods that are not vendored here.
+
+To update: sparse-clone upstream (`--filter=blob:none --sparse`, then
+`git sparse-checkout set unsupervised_methods evaluation`), copy the files listed
+above over this directory, re-empty that `__init__.py`, then run
 `venv/Scripts/python.exe -m pytest tests/` and `tools/calibrate_snr.py`.

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta, timezone, date as date_type
 import logging
@@ -27,24 +28,41 @@ router = APIRouter(prefix="/api/v1", tags=["health"])
 log = logging.getLogger("heartbeat.ppg")
 
 # --- Health Profile ---
+async def _find_profile(db: AsyncSession, user_id: str) -> HealthProfile | None:
+    # user_id was not unique, so concurrent first requests could each insert a
+    # row. Take the most recently updated one instead of failing on duplicates.
+    result = await db.execute(
+        select(HealthProfile)
+        .where(HealthProfile.user_id == user_id)
+        .order_by(HealthProfile.updated_at.desc())
+        .limit(1)
+    )
+    return result.scalars().first()
+
+async def _get_or_create_profile(db: AsyncSession, user_id: str) -> HealthProfile:
+    profile = await _find_profile(db, user_id)
+    if profile:
+        return profile
+    profile = HealthProfile(user_id=user_id)
+    db.add(profile)
+    try:
+        await db.flush()
+    except IntegrityError:
+        # Lost a race with a concurrent request that created it first.
+        await db.rollback()
+        return await _find_profile(db, user_id)
+    return profile
+
 @router.get("/health-profile", response_model=HealthProfileOut)
 async def get_profile(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(HealthProfile).where(HealthProfile.user_id == user.id))
-    profile = result.scalar_one_or_none()
-    if not profile:
-        profile = HealthProfile(user_id=user.id)
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
+    profile = await _get_or_create_profile(db, user.id)
+    await db.commit()
+    await db.refresh(profile)
     return profile
 
 @router.put("/health-profile", response_model=HealthProfileOut)
 async def update_profile(data: HealthProfileUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(HealthProfile).where(HealthProfile.user_id == user.id))
-    profile = result.scalar_one_or_none()
-    if not profile:
-        profile = HealthProfile(user_id=user.id)
-        db.add(profile)
+    profile = await _get_or_create_profile(db, user.id)
     if data.height_cm is not None:
         profile.height_cm = data.height_cm
     if data.weight_kg is not None:
@@ -219,8 +237,7 @@ async def nutrition_summary(days: int = 14, user: User = Depends(get_current_use
         bucket = by_day.get(current, {"calories": 0, "protein_g": 0.0, "carbs_g": 0.0, "fat_g": 0.0, "meals": 0})
         history.append(NutritionDay(day=current, **bucket))
 
-    profile_result = await db.execute(select(HealthProfile).where(HealthProfile.user_id == user.id))
-    profile = profile_result.scalar_one_or_none()
+    profile = await _find_profile(db, user.id)
     target = nutrition.daily_target(
         weight_kg=profile.weight_kg if profile else None,
         height_cm=profile.height_cm if profile else None,
@@ -234,8 +251,7 @@ async def nutrition_summary(days: int = 14, user: User = Depends(get_current_use
 # --- Weight ---
 @router.post("/weight", response_model=WeightOut, status_code=201)
 async def create_weight(data: WeightCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(HealthProfile).where(HealthProfile.user_id == user.id))
-    profile = result.scalar_one_or_none()
+    profile = await _find_profile(db, user.id)
     bmi = None
     if profile and profile.height_cm:
         bmi = round(data.weight_kg / (profile.height_cm / 100) ** 2, 1)
@@ -328,8 +344,7 @@ async def dashboard(user: User = Depends(get_current_user), db: AsyncSession = D
     )
     count = count_result.scalar()
 
-    profile_result = await db.execute(select(HealthProfile).where(HealthProfile.user_id == user.id))
-    profile = profile_result.scalar_one_or_none()
+    profile = await _find_profile(db, user.id)
 
     goals_result = await db.execute(
         select(func.count()).select_from(HealthGoal).where(HealthGoal.user_id == user.id, HealthGoal.status == "active")

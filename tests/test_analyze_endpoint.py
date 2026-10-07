@@ -13,17 +13,9 @@ def client():
         yield c
 
 
-@pytest.fixture(scope="module")
-def auth(client):
-    credentials = {"email": "ppg@example.com", "password": "secret123"}
-    registered = client.post(
-        "/api/v1/auth/register", json={**credentials, "full_name": "PPG"}
-    )
-    assert registered.status_code in (201, 400), registered.text
-
-    response = client.post("/api/v1/auth/login", json=credentials)
-    assert response.status_code == 200, response.text
-    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+@pytest.fixture
+def auth(client, sign_up):
+    return sign_up(client, "ppg@example.com")
 
 
 def payload(times, regions, source="finger", **extra):

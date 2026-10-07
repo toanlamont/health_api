@@ -20,6 +20,17 @@ class UserOut(BaseModel):
     date_of_birth: date | None = None
     gender: str | None = None
 
+class UserUpdate(BaseModel):
+    date_of_birth: date | None = None
+    gender: str | None = None
+
+class VerifyEmail(BaseModel):
+    email: EmailStr
+    code: str
+
+class ResendCode(BaseModel):
+    email: EmailStr
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"

@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.api.auth_router import router as auth_router
 from app.api.health_router import router as health_router
+from app.api.chat_router import router as chat_router
 
 # uvicorn configures its own loggers and leaves the root one alone, so without
 # this every log.info() in the app is swallowed at the default WARNING level.
@@ -24,6 +25,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 
 app.include_router(auth_router)
 app.include_router(health_router)
+app.include_router(chat_router)
 
 @app.get("/")
 async def root():

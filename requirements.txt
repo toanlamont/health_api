@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 sqlalchemy[asyncio]
 aiosqlite
+psycopg[binary]
 pydantic[email]
 python-jose[cryptography]
 passlib[bcrypt]
@@ -18,6 +19,10 @@ neurokit2
 opencv-python-headless
 scikit-image
 
-# For the GPU path. Install from the CUDA index, not plain PyPI:
-#   pip install torch --index-url https://download.pytorch.org/whl/cu126
-torch
+# torch is installed separately so CPU-only machines don't pull ~3GB of CUDA
+# wheels. Run scripts/install_torch.sh (auto-detects GPU; TORCH_VARIANT=cpu|cu126
+# to force).
+
+# Chat assistant (/api/v1/chat/stream). Provider picked by CHAT_MODEL
+# (default gemini/gemini-2.5-flash, needs GEMINI_API_KEY).
+litellm
